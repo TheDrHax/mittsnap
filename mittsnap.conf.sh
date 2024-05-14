@@ -20,6 +20,7 @@ BACKUP_ROOT=/backup
 # LOCKFILE=/var/lock/mittsnap.pid
 
 # Numbers of each type of backup to retain
+# KEEP_HOURLY=24
 # KEEP_DAILY=7
 # KEEP_WEEKLY=4
 # KEEP_MONTHLY=120

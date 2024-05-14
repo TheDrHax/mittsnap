@@ -208,6 +208,7 @@ get_count() {
     local level=$1
 
     case ${level} in
+        "hourly") echo "${KEEP_HOURLY-24}" ;;
         "daily") echo "${KEEP_DAILY-7}" ;;
         "weekly") echo "${KEEP_WEEKLY-5}" ;;
         "monthly") echo "${KEEP_MONTHLY-12}" ;;
@@ -223,7 +224,7 @@ rotate_backups() {
     info "Rotating ${level} backups"
 
     for (( i=${count}; i>= 0; i-- )); do
-        if ((i == 0)) && [[ $level == "daily" ]]; then
+        if ((i == 0)) && [[ $level == "hourly" ]]; then
             copy_backup "${level}.${i}" "${level}.$((${i}+1))" || continue
         else
             move_backup "${level}.${i}" "${level}.$((${i}+1))" || continue
@@ -242,13 +243,13 @@ prune_backups() {
 ##################################################################
 # Make new backups
 ##################################################################
-make_backup_daily() {
-    info "Making a new daily backup"
+make_backup_hourly() {
+    info "Making a new hourly backup"
 
-    local dstdir=${BACKUP_ROOT}/daily.0/
+    local dstdir=${BACKUP_ROOT}/hourly.0/
 
     if [[ ! -d ${dstdir} ]]; then
-        setup_backup daily.0
+        setup_backup hourly.0
     fi
 
     while IFS= read -r source; do
@@ -282,6 +283,11 @@ make_backup_daily() {
         esac
     done <<< $SOURCES
 }
+make_backup_daily() {
+    info "Making a new daily backup"
+
+    copy_backup "hourly.$(get_count hourly)" "daily.0" || (error "Cannot create daily backup."; exit 1)
+}
 make_backup_weekly() {
     info "Making a new weekly backup"
 
@@ -296,6 +302,7 @@ make_backup() {
     local level=$1
 
     case ${level} in
+        "hourly") make_backup_hourly ;;
         "daily") make_backup_daily ;;
         "weekly") make_backup_weekly ;;
         "monthly") make_backup_monthly ;;
@@ -336,7 +343,7 @@ main() {
     case ${level} in
         "init")
             info "Mittsnap setting up in ${BACKUP_ROOT}"
-            setup_backup daily.0
+            setup_backup hourly.0
             exit 0
             ;;
         "remove")
@@ -351,7 +358,7 @@ main() {
             print_config
             exit 0
             ;;
-        "daily"|"weekly"|"monthly")
+        "hourly"|"daily"|"weekly"|"monthly")
             info "Mittsnap starting $level snapshot"
 
             prune_backups $level
@@ -389,7 +396,8 @@ usage() {
     echo "  -v      : increase verbosity (can be repeated: -vv, -vvv)"
     echo "  -n      : Perform a dry run"
     echo "Commands:"
-    echo "  daily        : Perform a daily bacckup"
+    echo "  hourly       : Perform a hourly backup"
+    echo "  daily        : Perform a daily backup"
     echo "  weekly       : Perform a weekly backup"
     echo "  monthly      : Perform a monthly backup"
     echo "  init         : Initialize backup storage. Needs to be done before first daily backup."
