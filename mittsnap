@@ -145,8 +145,8 @@ setup_backup() {
         exit 1
     fi
 
-    runcmd "mkdir -p ${dir}"
-    runcmd "btrfs subvolume create ${dir}/local"
+    runcmd "mkdir -p $(dirname ${dir})"
+    runcmd "btrfs subvolume create ${dir}"
 }
 copy_backup() {
     local src_index=$1
@@ -159,15 +159,12 @@ copy_backup() {
         return 1
     fi
 
-    runcmd "mkdir -p ${dst}"
-    for f in ${src}/*; do
-        if ! is_subvolume ${f}; then
-            critical "${f} is not a btrfs subvolume. Archive corrupted?"
-            exit 1
-        fi
-        target=${dst}${f#${src}}
-        make_snapshot "${f}" "${target}"
-    done
+    runcmd "mkdir -p $(dirname ${dst})"
+    if ! is_subvolume ${src}; then
+        critical "${src} is not a btrfs subvolume. Archive corrupted?"
+        exit 1
+    fi
+    make_snapshot "${src}" "${dst}"
 }
 move_backup() {
     local src_index=$1
@@ -286,13 +283,13 @@ make_backup_hourly() {
                 make_snapshot "${src}" "${dstdir}${dst}"
                 ;;
             "local")
-                make_local_copy ${src} ${dstdir}local/${dst}
+                make_local_copy ${src} ${dstdir}${dst}
                 ;;
             "ssh")
-                make_ssh_copy ${src} ${dstdir}local/${dst}
+                make_ssh_copy ${src} ${dstdir}${dst}
                 ;;
             "script")
-                make_script_copy ${src} ${dstdir}local/${dst}
+                make_script_copy ${src} ${dstdir}${dst}
                 ;;
             *)
                 error "Unknown protocol: ${protocol} - ${source}"
