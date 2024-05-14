@@ -26,14 +26,16 @@ I have not tested this as much as I should have.
 - create a directory `/backup` for the backups
 
 ## How it works
-Mittsnap works with a rotating backup scheme. A new daily backup is started with `mittsnap daily`. By default 7 daily backups are retained, and any beyond that are removed.
+Mittsnap works with a rotating backup scheme. A new daily backup is started with `mittsnap hourly`. By default 24 hourly backups are retained, and any beyond that are removed.
 
-When running `mittsnap weekly`, the oldest daily backup is copied to a weekly backup (only if 7 daily backups exist). By default 4 weekly backups are retained.
+When running `mittsnap daily`, the oldest hourly backup is copied to a daily backup. By default 7 daily backups are retained.
+
+When running `mittsnap weekly`, the oldest daily backup is copied to a weekly backup. By default 4 weekly backups are retained.
 
 When running `mittsnap monthly` the oldest weekly backup is copied to a monthly backup. By default 120 monthly backups are retained.
 
 A new daily backup is created like this:
-- Backups of btrfs subvolumes are snapshotted into `daily.0/`.
+- Backups of btrfs subvolumes are snapshotted into `hourly.0/`.
 - Rsync based backups (local or over ssh) are rsynced to the btrfs subvolume `daily.0/local/`.
 
 It's only ever `daily.0/local` that can be written to (and is by rsync). All other backups are read-only snapshots of copy-on-write subvolumes, so everything is lightning fast.
@@ -51,7 +53,7 @@ SOURCES="
 "
 ```
 
-`<protocol>` can be `snapshot`, `local` or `ssh`.
+`<protocol>` can be `snapshot`, `local`, `ssh` or `script`.
 
 Ex:
 ```bash
@@ -59,6 +61,7 @@ SOURCES="
 snapshot /data/photos photos
 local /home/./thomasloven server/homedir
 ssh thomas@laptop:/home/./thomas laptop/homedir
+script /path/to/script.sh database/dump
 "
 ```
 
@@ -66,6 +69,7 @@ This will:
 - Make a snapshot of btrfs subvolume `/data/photos` i `daily.0/photos`
 - rsync `/home/thomasloven` into `daily.0/local/server/homedir/thomasloven`
 - rsync `/home/thomas` on the host `laptop` into `daily.0/local/laptop/homedir/thomas` through ssh.
+- Runs `/path/to/script.sh` and saves changes in the working directory.
 
 Note that the `/./` is an rsync feature to discard the left part of the path.
 
@@ -83,6 +87,7 @@ Try `mittsnap -h` for more usage options.
 
 Example crontab:
 ```cron
+0 *     * * *   root /usr/local/bin/mittsnap hourly
 0 0     * * *   root /usr/local/bin/mittsnap daily
 2 0     * * 1   root /usr/local/bin/mittsnap weekly
 4 0     1 * *   root /usr/local/bin/mittsnap monthly
