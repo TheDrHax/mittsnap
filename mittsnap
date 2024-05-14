@@ -188,14 +188,11 @@ remove_backup() {
         return 1
     fi
 
-    for f in ${dir}/*; do
-        if ! is_subvolume ${f}; then
-            critical "${f} is not a btrfs subvolume. Archive corrupted?"
-            exit 1
-        fi
-        runcmd "btrfs subvolume delete ${f}"
-    done
-    runcmd "rmdir ${dir}"
+    if ! is_subvolume ${dir}; then
+        critical "${dir} is not a btrfs subvolume. Archive corrupted?"
+        exit 1
+    fi
+    runcmd "btrfs subvolume delete ${dir}"
 }
 
 ##################################################################
