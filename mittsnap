@@ -206,15 +206,32 @@ remove_backup() {
 ##################################################################
 get_count() {
     local level=$1
+    local count=0
 
     case ${level} in
-        "hourly") echo "${KEEP_HOURLY-24}" ;;
-        "daily") echo "${KEEP_DAILY-7}" ;;
-        "weekly") echo "${KEEP_WEEKLY-5}" ;;
-        "monthly") echo "${KEEP_MONTHLY-12}" ;;
-        "yearly") echo "${KEEP_YEARLY-100}" ;;
+        "hourly") count="${KEEP_HOURLY-24}" ;;
+        "daily") count="${KEEP_DAILY-7}" ;;
+        "weekly") count="${KEEP_WEEKLY-5}" ;;
+        "monthly") count="${KEEP_MONTHLY-12}" ;;
+        "yearly") count="${KEEP_YEARLY-100}" ;;
         *) return 1 ;;
     esac
+
+    echo $((count-1))
+}
+get_last() {
+    local level=$1
+    local count=$(get_count $level)
+
+    for (( i=${count}; i >= 0; i-- )); do
+        if [ -e "$BACKUP_ROOT/$level.$i" ]; then
+            echo $i
+            return 0
+        fi
+    done
+
+    debug "get_last: Backup level $level does not exist (yet)"
+    return 1
 }
 rotate_backups() {
     local level=$1
@@ -286,17 +303,17 @@ make_backup_hourly() {
 make_backup_daily() {
     info "Making a new daily backup"
 
-    copy_backup "hourly.$(get_count hourly)" "daily.0" || (error "Cannot create daily backup."; exit 1)
+    copy_backup "hourly.$(get_last hourly)" "daily.0" || (error "Cannot create daily backup."; exit 1)
 }
 make_backup_weekly() {
     info "Making a new weekly backup"
 
-    copy_backup "daily.$(get_count daily)" "weekly.0" || (error "Cannot create weekly backup."; exit 1)
+    copy_backup "daily.$(get_last daily)" "weekly.0" || (error "Cannot create weekly backup."; exit 1)
 }
 make_backup_monthly() {
     info "Making a new weekly backup"
 
-    copy_backup "weekly.$(get_count weekly)" "monthly.0" || (error "Cannot create monthly backup."; exit 1)
+    copy_backup "weekly.$(get_last weekly)" "monthly.0" || (error "Cannot create monthly backup."; exit 1)
 }
 make_backup() {
     local level=$1
