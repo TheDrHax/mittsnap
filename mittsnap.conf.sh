@@ -33,6 +33,7 @@ BACKUP_ROOT=/backup
 #   snapshot - makes a snapshot of a btrfs subvolume
 #   local - rsync from local source
 #   ssh - rsync over ssh
+#   script - runs a script and backups files in the current directory
 # <source>: Source subvolume or rsync path
 #   note that rsync splits the path at a /./ and only retains what comes after it
 # <target>: Location in backup
@@ -44,6 +45,7 @@ BACKUP_ROOT=/backup
 # snapshot /data/photos photos
 # local /home/./thomasloven server/homedir
 # ssh thomas@laptop:/home/./thomas laptop/homedir
+# script /path/to/executable database/dumps
 # "
 
 SOURCES="

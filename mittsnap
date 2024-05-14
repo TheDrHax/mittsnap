@@ -121,6 +121,15 @@ make_ssh_copy() {
     ${src} ${dst}"
     runcmd "${cmd//$'\n'/' '}"
 }
+make_script_copy() {
+    local cmd=${1}
+    local dst=${2}
+
+    mkdir -p "${dst}"
+    pushd "${dst}" > /dev/null
+    runcmd "${cmd//$'\n'/' '}"
+    popd > /dev/null
+}
 
 ##################################################################
 # Backup management
@@ -263,6 +272,9 @@ make_backup_daily() {
                 ;;
             "ssh")
                 make_ssh_copy ${src} ${dstdir}local/${dst}
+                ;;
+            "script")
+                make_script_copy ${src} ${dstdir}local/${dst}
                 ;;
             *)
                 error "Unknown protocol: ${protocol} - ${source}"
