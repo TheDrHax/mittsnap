@@ -308,7 +308,7 @@ make_backup_weekly() {
     copy_backup "daily.$(get_last daily)" "weekly.0" || (error "Cannot create weekly backup."; exit 1)
 }
 make_backup_monthly() {
-    info "Making a new weekly backup"
+    info "Making a new monthly backup"
 
     copy_backup "weekly.$(get_last weekly)" "monthly.0" || (error "Cannot create monthly backup."; exit 1)
 }
